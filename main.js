@@ -49,27 +49,20 @@ module.exports.loginEmployee = async (event) => {
     console.log(empolyee);
     const key = process.env.KEY;
     let token;
+    await bcrypt.compare(password, empolyee.password, (err, result) => {
+      if (result) {
+        token = jwt.sign({ email, password, id: empolyee._id }, key);
+        console.log(token);
+      }
+    });
 
-    const result = bcrypt.compare(password, empolyee.password);
-
-    if (result) {
-      token = jwt.sign({ email, password, id: empolyee._id }, key);
-      console.log(token);
-      return {
-        statusCode: 200,
-        body: JSON.stringify({
-          message: "token genarated",
-          token,
-        }),
-      };
-    } else {
-      return {
-        statusCode: 501,
-        body: JSON.stringify({
-          message: "invalid password",
-        }),
-      };
-    }
+    return {
+      statusCode: 200,
+      body: JSON.stringify({
+        message: "token genarated",
+        token,
+      }),
+    };
   } catch (error) {
     return {
       statusCode: 501,
@@ -82,11 +75,7 @@ module.exports.loginEmployee = async (event) => {
 
 module.exports.sentMailafterSubmit = async (event) => {
   try {
-    const key = process.env.KEY;
-
-    const { token } = JSON.parse(event.body);
-
-    const decoded = jwt.verify(token, key);
+    const { email } = JSON.parse(event.body);
 
     const fromEmail = process.env.from;
     const mailPassword = process.env.password;
@@ -102,7 +91,7 @@ module.exports.sentMailafterSubmit = async (event) => {
 
     let info = await transporter.sendMail({
       from: fromEmail,
-      to: decoded.email,
+      to: email,
       subject: "welcome to inzint",
       html: `<b>welcome to inzint</b>`,
     });
